@@ -5,3 +5,4 @@ pypdf
 pdfplumber
 streamlit
 psycopg2-binary
+pysqlite3-binary
