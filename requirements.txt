@@ -6,3 +6,4 @@ pdfplumber
 streamlit
 psycopg2-binary
 pysqlite3-binary
+langchain_google_genai
