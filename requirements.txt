@@ -4,4 +4,4 @@ langchain-community
 pypdf
 pdfplumber
 streamlit
-psycopg2
+psycopg2-binary
