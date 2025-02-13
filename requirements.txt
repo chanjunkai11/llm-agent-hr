@@ -1,0 +1,7 @@
+langchain
+chromadb
+langchain-community
+pypdf
+pdfplumber
+streamlit
+psycopg2
