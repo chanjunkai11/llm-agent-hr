@@ -1,3 +1,5 @@
+import sys
+sys.modules["sqlite3"] = __import__("pysqlite3")
 import chromadb
 import streamlit as st
 import os
@@ -5,8 +7,7 @@ from langchain.schema import HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 import psycopg2
 import re
-import sys
-sys.modules["sqlite3"] = __import__("pysqlite3")
+
 
 db_secrets = st.secrets["database"]
 api_secrets = st.secrets["api"]
