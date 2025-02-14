@@ -86,7 +86,7 @@ if st.button("Generate Response"):
                 messages = [
                     SystemMessage(content="You are a posgreSQL SQL statement generator."),
                     HumanMessage(
-                        content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements that can be process by psycopg2.
+                        content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements.
                         
                         {query}
                         
