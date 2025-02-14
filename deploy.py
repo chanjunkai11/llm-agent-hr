@@ -129,7 +129,7 @@ if st.button("Generate Response"):
 
                                 {query}
 
-                                display and describe out the results in a organized manner
+                                display and describe out the results in a organized manner. Do not show SQL statement out.
                                 """
                             ),
                         ]
