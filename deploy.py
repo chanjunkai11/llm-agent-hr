@@ -84,9 +84,9 @@ if st.button("Generate Response"):
             else:
                 # Construct the LLM message format
                 messages = [
-                    SystemMessage(content="You are a posgreSQL statement generator."),
+                    SystemMessage(content="You are a posgreSQL SQL statement generator."),
                     HumanMessage(
-                        content=f"""You will help users translate their input natural language query requirements into postgreSQL statements return only the sql statement.
+                        content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements that can be process by psycopg2 return only the sql statement.
                         
                         {query}
 
