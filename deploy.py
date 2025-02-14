@@ -89,7 +89,8 @@ if st.button("Generate Response"):
                         content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements that can be process by psycopg2.
                         
                         {query}
-
+                        
+                        Ensure all SQL statements are psycopg2-compatible. Avoid psql meta-commands (e.g., `\d`) and use standard SQL queries instead.
                         Depending on user's input, you may need to use 
                         
                         {context1} 
