@@ -94,7 +94,7 @@ if st.button("Generate Response"):
                         
                         {context1} 
                         
-                        to perform joining or other information to generate the correct sql. Please take note that you must know which schema to use from. 
+                        which is the database metadata to perform joining or other information to generate the correct sql. Please take note that you must know which schema to use from. 
                         no other description or yapping just give the sql statement and nothing else 
                         """
                     ),
