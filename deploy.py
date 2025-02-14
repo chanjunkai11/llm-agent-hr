@@ -86,7 +86,7 @@ if st.button("Generate Response"):
                 messages = [
                     SystemMessage(content="You are a posgreSQL SQL statement generator."),
                     HumanMessage(
-                        content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements that can be process by psycopg2 return only the sql statement.
+                        content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements that can be process by psycopg2.
                         
                         {query}
 
@@ -102,7 +102,7 @@ if st.button("Generate Response"):
 
                 # Get response from LLM
                 response1 = llm.invoke(messages)
-               
+                st.write(response1.content)
                 # Display response
                 st.write("### Answer:")
                 sql_pattern = r"```sql\n(.*?)\n```"
