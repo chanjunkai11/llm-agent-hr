@@ -41,142 +41,140 @@ st.title("RAG Chatbot")
 vectorstore = load_chroma_index()
 llm = ChatGoogleGenerativeAI(model=chat_model_name)
 
-st.text_input("Ask a question:", key="query", on_change=lambda: process_query())
-def process_query():
-    query = st.session_state.query  # Get query from text input
-    if query:
-        docs1 = vectorstore[1].query(
-            query_texts=[query],
-            n_results=5,  # Number of similar documents to retrieve
-            include=["documents", "distances"]  # Ensure distances are included in the results
-        )
-        context1 = "\n\n".join(docs1['documents'][0])
+query = st.text_input("Ask a question:")
+if query:
+    docs1 = vectorstore[1].query(
+        query_texts=[query],
+        n_results=5,  # Number of similar documents to retrieve
+        include=["documents", "distances"]  # Ensure distances are included in the results
+    )
+    context1 = "\n\n".join(docs1['documents'][0])
 
+    if not docs1:
+        st.warning("No relevant documents found in the vector store. Try another query.")
+    else:
+        # Construct the LLM message format
+        messages = [
+            SystemMessage(content="You are a posgreSQL Interpreter."),
+            HumanMessage(
+                content=f"""Given the following postgreSQL schema:
+
+                {context1}
+
+                Determine where the user's query is able to convert into postgreSQL statement:
+
+                {query}
+                
+                output then classify as SQL if can convert into postgreSQL statement else is not SQL.
+                no description or yapping is needed just the class value is needed. Your response should only be SQL or not SQL not both.
+                """
+            ),
+        ]
+
+        # Get response from LLM
+        response = llm.invoke(messages)
+
+    if response.content == 'SQL':
         if not docs1:
             st.warning("No relevant documents found in the vector store. Try another query.")
         else:
             # Construct the LLM message format
             messages = [
-                SystemMessage(content="You are a posgreSQL Interpreter."),
+                SystemMessage(content="You are a posgreSQL SQL statement generator."),
                 HumanMessage(
-                    content=f"""Given the following postgreSQL schema:
-
-                    {context1}
-
-                    Determine where the user's query is able to convert into postgreSQL statement:
-
+                    content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements.
+                    
                     {query}
                     
-                    output then classify as SQL if can convert into postgreSQL statement else is not SQL.
-                    no description or yapping is needed just the class value is needed. Your response should only be SQL or not SQL not both.
+                    Ensure all SQL statements are psycopg2-compatible. Avoid psql meta-commands (e.g., `\d`) and use standard SQL queries instead.
+                    Depending on user's input, you may need to use 
+                    
+                    {context1} 
+                    
+                    which is the database metadata to perform joining or other information to generate the correct sql. Please take note that you must know which schema to use from. 
+                    no other description or yapping just give the sql statement and nothing else 
                     """
                 ),
             ]
 
             # Get response from LLM
-            response = llm.invoke(messages)
+            response1 = llm.invoke(messages)
+            # Display response
+            st.write("### Answer:")
+            sql_pattern = r"```sql\n(.*?)\n```"
+            match = re.search(sql_pattern, response1.content, re.DOTALL)
+            if match:
+                # Strip any leading/trailing whitespace and return the SQL statement
+                sql_statement = match.group(1).strip()
 
-        if response.content == 'SQL':
-            if not docs1:
-                st.warning("No relevant documents found in the vector store. Try another query.")
+                try:
+                    conn = psycopg2.connect(postgres_ip)
+                    cursor = conn.cursor()
+                    cursor.execute(sql_statement)
+                    rows = cursor.fetchall()
+
+                    # Construct the LLM message format
+                    messages = [
+                        SystemMessage(content="You are a helpful assistant."),
+                        HumanMessage(
+                            content=f"""Given the following data acquired from database and the sql statement:
+
+                            {rows}
+
+                            Answer the user's query:
+
+                            {query}
+
+                            display and describe out the results in a organized manner. Do not show SQL statement out.
+                            """
+                        ),
+                    ]
+
+                    # Get response from LLM
+                    response2 = llm.invoke(messages)
+                    # Print results
+                    st.write(response2.content)
+
+                    # Close cursor and connection
+                    cursor.close()
+                    conn.close()
+                except Exception as e:
+                    st.write(e)
+                
             else:
-                # Construct the LLM message format
-                messages = [
-                    SystemMessage(content="You are a posgreSQL SQL statement generator."),
-                    HumanMessage(
-                        content=f"""You will help users translate their input natural language query requirements into postgreSQL SQL statements.
-                        
-                        {query}
-                        
-                        Ensure all SQL statements are psycopg2-compatible. Avoid psql meta-commands (e.g., `\d`) and use standard SQL queries instead.
-                        Depending on user's input, you may need to use 
-                        
-                        {context1} 
-                        
-                        which is the database metadata to perform joining or other information to generate the correct sql. Please take note that you must know which schema to use from. 
-                        no other description or yapping just give the sql statement and nothing else 
-                        """
-                    ),
-                ]
+                st.write("No SQL provided")
+    else:
+        # Retrieve relevant documents
+        docs = vectorstore[0].query(
+            query_texts=[query],
+            n_results=7,  # Number of similar documents to retrieve
+            include=["documents", "distances"]  # Ensure distances are included in the results
+        )
+        context = "\n\n".join(docs['documents'][0])
 
-                # Get response from LLM
-                response1 = llm.invoke(messages)
-                # Display response
-                st.write("### Answer:")
-                sql_pattern = r"```sql\n(.*?)\n```"
-                match = re.search(sql_pattern, response1.content, re.DOTALL)
-                if match:
-                    # Strip any leading/trailing whitespace and return the SQL statement
-                    sql_statement = match.group(1).strip()
-
-                    try:
-                        conn = psycopg2.connect(postgres_ip)
-                        cursor = conn.cursor()
-                        cursor.execute(sql_statement)
-                        rows = cursor.fetchall()
-
-                        # Construct the LLM message format
-                        messages = [
-                            SystemMessage(content="You are a helpful assistant."),
-                            HumanMessage(
-                                content=f"""Given the following data acquired from database and the sql statement:
-
-                                {rows}
-
-                                Answer the user's query:
-
-                                {query}
-
-                                display and describe out the results in a organized manner. Do not show SQL statement out.
-                                """
-                            ),
-                        ]
-
-                        # Get response from LLM
-                        response2 = llm.invoke(messages)
-                        # Print results
-                        st.write(response2.content)
-
-                        # Close cursor and connection
-                        cursor.close()
-                        conn.close()
-                    except Exception as e:
-                        st.write(e)
-                    
-                else:
-                    st.write("No SQL provided")
+        if not docs:
+            st.warning("No relevant documents found in the vector store. Try another query.")
         else:
-            # Retrieve relevant documents
-            docs = vectorstore[0].query(
-                query_texts=[query],
-                n_results=7,  # Number of similar documents to retrieve
-                include=["documents", "distances"]  # Ensure distances are included in the results
-            )
-            context = "\n\n".join(docs['documents'][0])
+            # Construct the LLM message format
+            messages = [
+                SystemMessage(content="You are a HR assistant."),
+                HumanMessage(
+                    content=f"""Given the following documents:
 
-            if not docs:
-                st.warning("No relevant documents found in the vector store. Try another query.")
-            else:
-                # Construct the LLM message format
-                messages = [
-                    SystemMessage(content="You are a HR assistant."),
-                    HumanMessage(
-                        content=f"""Given the following documents:
+                    {context}
 
-                        {context}
+                    Answer the user's query:
 
-                        Answer the user's query:
+                    {query}
 
-                        {query}
+                    Accurately, and do not provide any information that is not included in the documents.
+                    """
+                ),
+            ]
 
-                        Accurately, and do not provide any information that is not included in the documents.
-                        """
-                    ),
-                ]
+            # Get response from LLM
+            response3 = llm.invoke(messages)
 
-                # Get response from LLM
-                response3 = llm.invoke(messages)
-
-                # Display response
-                st.write("### Answer:")
-                st.write(response3.content)
+            # Display response
+            st.write("### Answer:")
+            st.write(response3.content)
