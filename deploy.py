@@ -41,6 +41,7 @@ st.title("RAG Chatbot")
 vectorstore = load_chroma_index()
 llm = ChatGoogleGenerativeAI(model=chat_model_name)
 
+st.text_input("Ask a question:", key="query", on_change=lambda: process_query())
 def process_query():
     query = st.session_state.query  # Get query from text input
     if query:
@@ -179,5 +180,3 @@ def process_query():
                 # Display response
                 st.write("### Answer:")
                 st.write(response3.content)
-
-st.text_input("Ask a question:", key="query", on_change=process_query)
