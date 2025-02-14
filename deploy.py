@@ -8,7 +8,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmb
 import psycopg2
 import re
 
-
 db_secrets = st.secrets["database"]
 api_secrets = st.secrets["api"]
 
@@ -37,15 +36,13 @@ def load_chroma_index():
     collection1 = chroma_client.get_collection("my_database", embedding_function=get_embedding_function(embedding_model_name))   
     return collection, collection1
 
-
 st.title("RAG Chatbot")
 
 vectorstore = load_chroma_index()
 llm = ChatGoogleGenerativeAI(model=chat_model_name)
 
-query = st.text_input("Ask a question:")
-
-if st.button("Generate Response"):
+def process_query():
+    query = st.session_state.query  # Get query from text input
     if query:
         docs1 = vectorstore[1].query(
             query_texts=[query],
@@ -181,8 +178,6 @@ if st.button("Generate Response"):
 
                 # Display response
                 st.write("### Answer:")
-
-                # Display cleaned response
                 st.write(response3.content)
-    else:
-        st.warning("Please enter a question.")
+
+st.text_input("Ask a question:", key="query", on_change=process_query)
