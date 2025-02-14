@@ -102,8 +102,6 @@ if st.button("Generate Response"):
 
                 # Get response from LLM
                 response1 = llm.invoke(messages)
-                st.write(response1.content)
-                st.write(query)
                 # Display response
                 st.write("### Answer:")
                 sql_pattern = r"```sql\n(.*?)\n```"
